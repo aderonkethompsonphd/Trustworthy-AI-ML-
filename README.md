@@ -1,68 +1,104 @@
-# GAOR: Genetic Algorithm-Based Optimization for ML Robustness
+# GAOR related research notebooks
 
-Code accompanying our peer-reviewed paper:
+Research notebooks associated with:
 
-> Thompson, A.; Suomalainen, J. **GAOR: Genetic Algorithm-Based Optimization for Machine
-> Learning Robustness in Communication Networks.** *Network* 2025, 5, 6.
-> https://doi.org/10.3390/network5010006 (open access, CC BY 4.0)
+Thompson, A. F., & Suomalainen, J. (2025). **GAOR: Genetic Algorithm-Based
+Optimization for Machine Learning Robustness in Communication Networks.**
+*Network*, 5(1), 6. https://doi.org/10.3390/network5010006
 
-## What this studies
+The research concerns machine-learning intrusion detection, feature selection
+and adversarial robustness. This repository contains experimental code and
+separate exploratory notebooks. It is not yet a complete, independently
+validated reproduction package for the published paper.
 
-Tree-based ML models (Random Forest, XGBoost) are widely used for network intrusion
-detection because they're accurate and relatively interpretable on tabular data. But
-they're vulnerable to **evasion attacks** — small, crafted input perturbations that push
-a malicious sample across the decision boundary without changing what a human would
-recognize as the same traffic.
+## Current status
 
-This work evaluates whether **genetic-algorithm-optimized adversarial training** can make
-RF and XGBoost intrusion detectors more robust to evasion — and, critically, what that
-robustness costs in detection accuracy.
+The main and feature-sensitivity notebooks have been revised to address
+label scoring, preprocessing leakage and test-set use during early stopping.
+Their saved outputs have been cleared. **The revised notebooks have not been
+run end to end on the original data, and no corrected research results are
+claimed here.** See [REVIEW_NOTES.md](REVIEW_NOTES.md).
 
-## Approach
+Original notebooks remain available in Git history at commit
+`eec1f50cac9ab65562c70fe1bd1862e9c5b44493`. Historical outputs should not be treated
+as validated results from this revision.
 
-- Adversarial samples generated using the **A2PM** (Adaptive Perturbation Pattern Method)
-  framework, with a genetic algorithm (`sklearn-genetic`'s `GeneticSelectionCV`) optimizing
-  feature selection and hyperparameters across generations (selection, crossover, mutation).
-- Evaluated on two network intrusion datasets: **CIC-IDS2019** and **5G-NIDD**.
-- Models attacked using IBM's Adversarial Robustness Toolbox (ART) — specifically
-  **ZooAttack** against XGBoost and LightGBM classifiers.
-- Robustness measured as adversarial accuracy (correct predictions on adversarial samples
-  ÷ total adversarial samples), alongside standard cross-validation accuracy and AUC.
+## Contents and scope
 
-## Key finding
+| File | What it contains |
+| --- | --- |
+| `GAOR_NIDS_Using_RF,_XG_and_ANN.ipynb` | RF, XGBoost and ANN experiments; GA feature selection; an exploratory ART ZOO evaluation of fitted RF/XGBoost models with full and selected features. |
+| `Feature Sensitivity with Machine Learning.ipynb` | A separate NSL-KDD interpretability demonstration using SHAP, LIME, permutation importance and partial dependence. It is not established as a reproduction of the paper's feature analysis. |
+| `MACAU.ipynb` | Historical exploratory uncertainty-quantification notebook requiring an external MACAU package and prepared local data. Not revised or validated in this review. |
+| `MACAU with random dataset.ipynb` | Historical MACAU exploration with synthetic data. Requires the external MACAU package; not revised or validated in this review. |
 
-**Robustness has a cost.** Base models (RF, XGBoost, ANN) achieved ~99.5–99.96% baseline
-accuracy. After GA-based adversarial training (GAOR), baseline accuracy held steady
-(99.3–99.95%) — but adversarial-attack accuracy told a different story:
+`GeneticSelectionCV` selects features using a model's predictive score. In the
+uploaded implementation it does not generate adversarial samples or optimise
+model hyperparameters. The revised main notebook does not implement A2PM,
+adversarial retraining, or a 5G-NIDD experiment. Any claims about these parts of
+the wider study must be supported by the paper and corresponding experiment
+files, rather than inferred from this repository.
 
-| Attack | RF (base → GAOR) | XGBoost (base → GAOR) |
-|---|---|---|
-| ZooAttack + XGBoostClassifier | 100% → 60% | 100% → 40% |
-| ZooAttack + LightGBMClassifier | 40% → 20% | 80% → **100%** |
+## Running the revised main notebook
 
-RF's detection ability degraded under both attack types after GA modification. XGBoost
-degraded against the simpler attack but *improved* against the more sophisticated one —
-suggesting GA-based adversarial training doesn't uniformly help, and its value is
-attack- and model-specific rather than a general-purpose fix. Full discussion in Section 4
-of the paper.
+1. Create an isolated Python environment.
+2. Install the candidate dependencies: `python -m pip install -r requirements.txt`.
+   Versions are not locked or validated as a complete environment yet.
+3. Supply your prepared CSV at `data/cicddos2019_dataset.csv`, or set the
+   `GAOR_DATA_PATH` environment variable to its location before launching Jupyter.
+4. Open Jupyter with `python -m jupyterlab` and run the main notebook in order.
+5. Save the package versions (`python -m pip freeze`), dataset provenance,
+   preprocessing steps, file hash, sample counts and new results for that run.
 
-## Notebooks
+Expected prepared CSV schema:
 
-- **`GAOR_NIDS_Using_RF,_XG_and_ANN.ipynb`** — main experiment: GA-based adversarial
-  training and evaluation across RF, XGBoost, and ANN (Table 3 / Figure 8 in the paper).
-- **`Feature Sensitivity with Machine Learning.ipynb`** — model-agnostic feature analysis
-  (SHAP, LIME, partial dependence, correlation matrix) identifying which features are most
-  exploitable by perturbation (Section 4.3).
-- **`MACAU.ipynb`**, **`MACAU with random dataset.ipynb`** — exploratory work with VTT's
-  MACAU uncertainty-quantification tool for Random Forest models, related to but separate
-  from the core GAOR experiments.
+- `Class`: binary labels `Benign` and `Attack` (case-insensitive).
+- Numeric feature columns. An optional `Label` and `Unnamed: 0` column are removed.
+- Nonfinite values and rows with missing values are removed explicitly.
+- Any label mapping, feature engineering, deduplication or sampling used to
+  create this prepared CSV must be documented separately. The raw download is
+  not guaranteed to have this schema.
 
-## Data
+The original filenames suggest CIC-DDoS2019. Its official dataset page is
+https://www.unb.ca/cic/datasets/ddos-2019.html . Confirm the provenance of the
+prepared CSV; a filename alone cannot establish the exact dataset or subset.
+The previous README incorrectly linked to IDS2017. The NSL-KDD demonstration
+loads a different dataset from the URL embedded in its notebook.
 
-This repo does not include the raw datasets. They're publicly available from their
-original sources:
-- CIC-IDS2019: https://www.unb.ca/cic/datasets/ids-2017.html
-- 5G-NIDD: https://5gtnf.fi/
+Raw datasets and the original preprocessing pipeline are not included.
+
+## Evaluation and limitations
+
+- Training, validation and test partitions are separate. Scalers and encoders
+  are fitted only on training data. ANN early stopping uses validation data.
+- Main-notebook min-max scaling explicitly clips held-out extremes to the
+  training range. This preprocessing choice must accompany reported results.
+- GA feature selection uses training data only. Post-selection cross-validation
+  summaries have been removed because selection happened outside those folds;
+  nested evaluation is needed before reporting such CV estimates.
+- ROC and precision-recall plots use probability scores rather than hard labels.
+- ART evaluation uses class IDs for reference labels and class probabilities for
+  predictions. Attack success is also reported among initially correct samples.
+- The default attack sample size is **five rows, for a smoke test only**. Both
+  classes are represented; this forced representation is not a prevalence-weighted
+  benchmark. Larger, justified samples and repeated seeds are needed for conclusions.
+- The attack operates on continuous features with values bounded to [0, 1]. It
+  does not enforce immutable fields, valid discrete values or traffic semantics.
+  It therefore does not demonstrate physically feasible evasion on a network.
+- The attack section is a revised experiment, not a reconstruction of the
+  paper's numerical table. ZOO is one attack; its results do not establish
+  general robustness. No numerical robustness claims are made in this README.
+- Random row splits do not establish independence across duplicate flows,
+  sessions, hosts or time periods. Check these before interpreting generalisation.
+- Feature importance shows model associations, not proof of causal effects or
+  exploitability. MACAU notebooks retain historical limitations.
+
+## Research relevance
+
+The notebooks illustrate ML experiment design, feature selection, interpretation
+and adversarial evaluation in network intrusion detection. These methods are
+relevant background for AI security research. This repository does not claim
+experience evaluating frontier-model scheming or coding-agent control systems.
 
 ## Citation
 
@@ -75,11 +111,11 @@ original sources:
   number={1},
   pages={6},
   year={2025},
-  publisher={MDPI},
   doi={10.3390/network5010006}
 }
 ```
 
-## Funding
+## Acknowledgements
 
-Supported by the AI-NET-ANTILLAS project (partially funded by Business Finland) and ERCIM.
+Research supported by AI-NET-ANTILLAS and ERCIM. MACAU is an external tool used
+in the exploratory notebooks; its implementation is not included here.
