@@ -1,0 +1,16 @@
+# Candidate environment for the revised main and NSL-KDD notebooks.
+# Not a validated lockfile. Capture exact versions after a successful full run.
+numpy
+pandas
+scipy
+scikit-learn
+matplotlib
+seaborn
+xgboost
+tensorflow
+sklearn-genetic
+adversarial-robustness-toolbox
+shap
+lime
+joblib
+jupyterlab
